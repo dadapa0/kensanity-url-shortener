@@ -1,87 +1,65 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
+const fs = require("fs");
 const cors = require("cors");
-app.use(cors());
+const path = require("path");
 
 const app = express();
-const db = new sqlite3.Database("./kensanity.sqlite3");
-
 app.use(cors());
 app.use(express.json());
 
-// Init tables
-db.serialize(()=>{
-  db.run(`CREATE TABLE IF NOT EXISTS links(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    code TEXT UNIQUE,
-    url TEXT NOT NULL,
-    created_at INTEGER,
-    hits INTEGER DEFAULT 0
-  )`);
-  db.run(`CREATE TABLE IF NOT EXISTS visitors(
-    id INTEGER PRIMARY KEY AUTOINCREMENT
-  )`);
-});
+const DB_FILE = path.join(__dirname, "db.json");
 
-// 4-char lowercase alphanumeric
-function generateCode(){
-  const chars="abcdefghijklmnopqrstuvwxyz0123456789";
-  return [...Array(4)].map(()=>chars[Math.floor(Math.random()*chars.length)]).join("");
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, JSON.stringify({ urls:{}, visitors:0 }, null, 2));
 }
 
-// shorten
-app.post("/api/shorten",(req,res)=>{
-  let {url,code} = req.body;
-  url = url?.trim();
-  code = code?.trim();
+function loadDB(){
+  return JSON.parse(fs.readFileSync(DB_FILE));
+}
 
-  if(!url) return res.status(400).json({error:"url required"});
-  if(code && !/^[a-z0-9]{4}$/.test(code))
-    return res.status(400).json({error:"custom code must be 4 lowercase alphanumeric"});
+function saveDB(db){
+  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+}
 
-  const tryInsert = (c)=>{
-    db.run(
-      `INSERT INTO links(code,url,created_at) VALUES(?,?,?)`,
-      [c,url,Date.now()],
-      function(err){
-        if(err){
-          if(code) return res.status(409).json({error:"code exists"});
-          return tryInsert(generateCode());
-        }
-        res.json({code:c, url});
-      }
-    );
-  };
+function generateCode(){
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let r="";
+  for(let i=0;i<4;i++) r+=chars[Math.floor(Math.random()*chars.length)];
+  return r;
+}
 
-  tryInsert(code?code:generateCode());
+// Shorten URL
+app.post("/shorten", (req,res)=>{
+  const url = req.body.url;
+  if(!url) return res.json({error:"Invalid URL"});
+
+  const db = loadDB();
+  const code = generateCode();
+  db.urls[code] = url;
+  saveDB(db);
+
+  return res.json({ shortUrl:`ken.sanity/${code}` });
 });
 
-// redirect
-app.get("/:code",(req,res)=>{
-  const code=req.params.code;
-  db.get(`SELECT url FROM links WHERE code=?`,[code],(err,row)=>{
-    if(!row) return res.status(404).send("Not found");
-    db.run(`UPDATE links SET hits=hits+1 WHERE code=?`,[code]);
-    const final = row.url.match(/^https?:\/\//)? row.url : "https://"+row.url;
-    res.redirect(final);
-  });
+// Visitor counter API
+app.get("/visitors", (req,res)=>{
+  const db = loadDB();
+  db.visitors++;
+  saveDB(db);
+  res.json({ count: db.visitors });
 });
 
-// list
-app.get("/api/list",(req,res)=>{
-  db.all(`SELECT code,url,hits FROM links ORDER BY id DESC`,[],(err,rows)=>{
-    res.json(rows);
-  });
+// Redirect handler
+app.get("/:code", (req,res)=>{
+  const code = req.params.code;
+  const db = loadDB();
+  if(db.urls[code]){
+    return res.redirect(db.urls[code]);
+  }
+  res.send("Invalid code");
 });
 
-// visitor counter
-app.get("/api/visit",(req,res)=>{
-  db.run(`INSERT INTO visitors DEFAULT VALUES`);
-  db.get(`SELECT COUNT(*) AS total FROM visitors`,[],(err,row)=>{
-    res.json({total:row.total});
-  });
-});
 
+// REQUIRED for Render
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
-
+app.listen(PORT, ()=>console.log("Backend running on " + PORT));
