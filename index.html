@@ -1,40 +1,37 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="UTF-8">
 <title>Kensanity URL Shortener</title>
-<link rel="stylesheet" href="style.css"/>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>Kensanity URL Shortener</h1>
-  <div id="visitorCounter">Visitors: --</div>
-</header>
 
-<main>
-  <div class="card">
-    <label>Enter long URL</label>
-    <input id="longUrl" placeholder="https://example.com"/>
+<div class="container">
 
-    <label>Custom code (optional, 4 chars)</label>
-    <input id="customCode" maxlength="4" placeholder="abcd"/>
+    <header>
+        <h1>Kensanity URL Shortener</h1>
+        <div class="visitor-counter">
+            Visitors: <span id="visitorCount">...</span>
+        </div>
+    </header>
 
-    <button id="shortenBtn">Shorten URL</button>
+    <div class="form-area">
+        <input id="urlInput" type="text" placeholder="Enter URL to shorten">
+        <button onclick="shorten()">Shorten URL</button>
+    </div>
 
-    <div id="result"></div>
-  </div>
+    <div id="result" class="result-box"></div>
 
-  <div class="card" id="listCard">
-    <h2>Your Shortened URLs</h2>
-    <div id="linkList"></div>
-    <button id="refreshBtn">Refresh</button>
-  </div>
-</main>
+</div>
+
+
+<!-- Running Text Footer -->
 <div class="running-text">
   Kensanity URL Shortener is developed by Paolo M. Alejandre of 124221 San Pablo ES. 
   Mabuhay ang kaguruang Pilipino! Long live ALPHA PHI UPSILON!
 </div>
+
 <script src="script.js"></script>
 </body>
 </html>
