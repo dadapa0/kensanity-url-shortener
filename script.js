@@ -1,5 +1,5 @@
 // IMPORTANT: put your actual Render backend URL here:
-const BACKEND_URL = "https://YOUR_RENDER_BACKEND_URL";
+const BACKEND_URL = "https://kensanity-url-shortener.onrender.com";
 
 // shorten
 async function shorten(){
@@ -50,3 +50,4 @@ async function loadVisitorCounter(){
     }
 }
 loadVisitorCounter();
+
