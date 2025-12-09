@@ -1,6 +1,7 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
+app.use(cors());
 
 const app = express();
 const db = new sqlite3.Database("./kensanity.sqlite3");
@@ -82,4 +83,5 @@ app.get("/api/visit",(req,res)=>{
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT,()=>console.log("Kensanity backend running on",PORT));
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+
