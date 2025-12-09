@@ -1,46 +1,23 @@
-const backend = "<BACKEND_URL>"; // e.g. https://kensanity-backend.onrender.com
+const BACKEND = "https://kensanity-url-shortener.onrender.com";
 
-async function shorten(){
-  const url = document.getElementById("longUrl").value.trim();
-  const custom = document.getElementById("customCode").value.trim();
+async function shorten() {
+  const url = document.getElementById("urlInput").value.trim();
+  if (!url) return alert("Enter a URL!");
 
-  const res = await fetch(`${backend}/api/shorten`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ url, code: custom })
+  const res = await fetch(`${BACKEND}/shorten`, {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify({ url })
   });
-  const j = await res.json();
-  if(!res.ok){
-    document.getElementById("result").innerHTML = "Error: "+j.error;
-    return;
-  }
-  document.getElementById("result").innerHTML =
-    `<strong>Short URL:</strong> ken.sanity/${j.code}`;
-  refreshList();
+
+  const data = await res.json();
+  document.getElementById("result").innerText = data.shortUrl;
 }
 
-async function refreshList(){
-  const r = await fetch(`${backend}/api/list`);
-  const list = await r.json();
-  const box = document.getElementById("linkList");
-  box.innerHTML="";
-  list.forEach(item=>{
-    box.innerHTML += `<div>ken.sanity/${item.code} ➜ ${item.url}</div>`;
-  });
-}
-
-async function countVisitor(){
-  const r = await fetch(`${backend}/api/visit`);
+// Load visitor counter
+async function loadVisitors(){
+  const r = await fetch(`${BACKEND}/visitors`);
   const j = await r.json();
-  document.getElementById("visitorCounter").innerText =
-    `Visitors: ${j.total}`;
+  document.getElementById("visitorCount").innerText = j.count;
 }
-
-// events
-document.getElementById("shortenBtn").onclick = shorten;
-document.getElementById("refreshBtn").onclick = refreshList;
-
-window.onload = ()=>{
-  refreshList();
-  countVisitor();
-};
+loadVisitors();
