@@ -13,13 +13,8 @@ if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify({ urls:{}, visitors:0 }, null, 2));
 }
 
-function loadDB(){
-  return JSON.parse(fs.readFileSync(DB_FILE));
-}
-
-function saveDB(db){
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-}
+function loadDB(){ return JSON.parse(fs.readFileSync(DB_FILE)); }
+function saveDB(db){ fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
 
 function generateCode(){
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -29,8 +24,8 @@ function generateCode(){
 }
 
 // Shorten URL
-app.post("/shorten", (req,res)=>{
-  const url = req.body.url;
+app.post("/api/shorten", (req,res)=>{
+  const url = req.body.longUrl;
   if(!url) return res.json({error:"Invalid URL"});
 
   const db = loadDB();
@@ -38,15 +33,15 @@ app.post("/shorten", (req,res)=>{
   db.urls[code] = url;
   saveDB(db);
 
-  return res.json({ shortUrl:`ken.sanity/${code}` });
+  return res.json({ code });
 });
 
 // Visitor counter API
-app.get("/visitors", (req,res)=>{
+app.get("/api/visitors", (req,res)=>{
   const db = loadDB();
   db.visitors++;
   saveDB(db);
-  res.json({ count: db.visitors });
+  res.json({ visitors: db.visitors });
 });
 
 // Redirect handler
@@ -59,7 +54,5 @@ app.get("/:code", (req,res)=>{
   res.send("Invalid code");
 });
 
-
-// REQUIRED for Render
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, ()=>console.log("Backend running on " + PORT));
