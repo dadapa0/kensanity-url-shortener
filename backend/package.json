@@ -1,14 +1,14 @@
 {
-  "name": "url-shortener",
+  "name": "kensanity-backend",
   "version": "1.0.0",
   "main": "server.js",
-  "type": "module",
-  "scripts": {
-    "start": "node server.js"
-  },
+  "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.0",
-    "nanoid": "^4.0.2"
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
+  },
+  "scripts": {
+    "start": "node server.js"
   }
 }
