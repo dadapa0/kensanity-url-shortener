@@ -10,20 +10,25 @@ const backendVisitors = { count: 0 }; // in-memory visitor counter
 
 // Shorten URL via urlshort.dev
 app.post("/api/shorten", async (req, res) => {
-  const { longUrl } = req.body;
+  const { longUrl, customCode } = req.body;
   if (!longUrl) return res.json({ error: "Missing longUrl" });
 
   try {
+    const bodyData = { url: longUrl };
+    if (customCode) bodyData.suffix = customCode; // optional 4-char custom code
+
     const response = await fetch("https://api.encurtador.dev/encurtamentos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: longUrl })
+      body: JSON.stringify(bodyData)
     });
 
     const data = await response.json();
 
     if (data.urlEncurtada) {
       return res.json({ shortUrl: data.urlEncurtada });
+    } else if (data.error) {
+      return res.json({ error: data.error });
     } else {
       return res.json({ error: "Failed to shorten URL" });
     }
