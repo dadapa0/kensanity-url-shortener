@@ -1,7 +1,7 @@
 // Render backend URL
 const backend = "https://kensanity-url-shortener.onrender.com";
 
-// Shorten URL function (called by button)
+// Shorten URL function
 async function shorten() {
     const longInput = document.getElementById("longUrl");
     const shortInput = document.getElementById("shortUrl");
@@ -35,7 +35,7 @@ async function shorten() {
     }
 }
 
-// Copy short URL function (called by button)
+// Copy button function
 function copyShort() {
     const shortInput = document.getElementById("shortUrl");
     shortInput.select();
@@ -56,5 +56,5 @@ async function updateVisitors() {
     }
 }
 
-// Initialize visitor counter on page load
+// Initialize visitor counter
 updateVisitors();
