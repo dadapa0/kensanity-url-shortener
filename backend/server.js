@@ -7,9 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Render backend URL
+const BASE = "https://kensanity-url-shortener.onrender.com";
+
 const DB_FILE = path.join(__dirname, "db.json");
 
-// initialize database if missing
+// Create DB if no exist
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify({ urls: {}, visitors: 0 }, null, 2));
 }
@@ -17,12 +20,11 @@ if (!fs.existsSync(DB_FILE)) {
 function loadDB() {
   return JSON.parse(fs.readFileSync(DB_FILE));
 }
-
 function saveDB(db) {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
 }
 
-// generate 4-character alphanumeric code
+// Create code
 function generateCode() {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let r = "";
@@ -30,35 +32,37 @@ function generateCode() {
   return r;
 }
 
-// Shorten URL endpoint
+// Shorten URL
 app.post("/api/shorten", (req, res) => {
-  const url = req.body.longUrl;
-  if (!url) return res.status(400).json({ error: "Invalid URL" });
+  const url = req.body.url;
+  if (!url) return res.json({ error: "Invalid URL" });
 
   const db = loadDB();
   const code = generateCode();
   db.urls[code] = url;
   saveDB(db);
 
-  res.json({ code });
+  return res.json({ shortUrl: `${BASE}/${code}` });
 });
 
-// Visitor counter endpoint
+// Visitors
 app.get("/api/visitors", (req, res) => {
   const db = loadDB();
   db.visitors++;
   saveDB(db);
-  res.json({ visitors: db.visitors });
+  res.json({ count: db.visitors });
 });
 
-// Redirect shortened URL
+// Redirect Route
 app.get("/:code", (req, res) => {
   const code = req.params.code;
   const db = loadDB();
-  if (db.urls[code]) return res.redirect(db.urls[code]);
+  if (db.urls[code]) {
+    return res.redirect(db.urls[code]);
+  }
   res.send("Invalid code");
 });
 
-// Listen on Render port
+// Start
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Backend running on port", PORT));
+app.listen(PORT, () => console.log("Backend running on " + PORT));
