@@ -1,68 +1,53 @@
-const express = require("express");
-const fs = require("fs");
-const cors = require("cors");
-const path = require("path");
+import express from "express";
+import cors from "cors";
+import { nanoid } from "nanoid";
+import fs from "fs";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Render backend URL
-const BASE = "https://kensanity-url-shortener.onrender.com";
+const dbFile = "./db.json";
 
-const DB_FILE = path.join(__dirname, "db.json");
-
-// Create DB if no exist
-if (!fs.existsSync(DB_FILE)) {
-  fs.writeFileSync(DB_FILE, JSON.stringify({ urls: {}, visitors: 0 }, null, 2));
+function readDB() {
+  return JSON.parse(fs.readFileSync(dbFile));
 }
 
-function loadDB() {
-  return JSON.parse(fs.readFileSync(DB_FILE));
-}
-function saveDB(db) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+function saveDB(data) {
+  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
 }
 
-// Create code
-function generateCode() {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let r = "";
-  for (let i = 0; i < 4; i++) r += chars[Math.floor(Math.random() * chars.length)];
-  return r;
-}
-
-// Shorten URL
+// API shorten
 app.post("/api/shorten", (req, res) => {
-  const url = req.body.url;
-  if (!url) return res.json({ error: "Invalid URL" });
+  const { longUrl } = req.body;
 
-  const db = loadDB();
-  const code = generateCode();
-  db.urls[code] = url;
+  if (!longUrl) return res.json({ error: "Missing longUrl" });
+
+  const shortId = nanoid(6);
+  const shortUrl = `https://kensanity-url-shortener.onrender.com/${shortId}`;
+
+  const db = readDB();
+  db[shortId] = longUrl;
   saveDB(db);
 
-  return res.json({ shortUrl: `${BASE}/${code}` });
+  res.json({ shortUrl });
 });
 
-// Visitors
-app.get("/api/visitors", (req, res) => {
-  const db = loadDB();
-  db.visitors++;
-  saveDB(db);
-  res.json({ count: db.visitors });
-});
+// redirect
+app.get("/:id", (req, res) => {
+  const id = req.params.id;
+  const db = readDB();
 
-// Redirect Route
-app.get("/:code", (req, res) => {
-  const code = req.params.code;
-  const db = loadDB();
-  if (db.urls[code]) {
-    return res.redirect(db.urls[code]);
+  if (db[id]) {
+    return res.redirect(db[id]);
   }
-  res.send("Invalid code");
+  res.status(404).send("URL not found.");
 });
 
-// Start
+// root just so it doesn’t show “Cannot GET /”
+app.get("/", (req, res) => {
+  res.send("URL Shortener API working 👌");
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Backend running on " + PORT));
+app.listen(PORT, () => console.log("Server running on port " + PORT));
