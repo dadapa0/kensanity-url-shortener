@@ -1,49 +1,26 @@
-const backend = "https://kensanity-url-shortener.onrender.com";
+const apiBase = "https://kensanity-url-shortener.onrender.com";
 
-// DOM
-const longInput = document.getElementById("longUrl");
-const resultBox = document.getElementById("resultBox");
-const shortenBtn = document.getElementById("shortenBtn");
-const copyBtn = document.getElementById("copyBtn");
-const outputUrl = document.getElementById("outputUrl");
-const visitors = document.getElementById("visitors");
+document.getElementById("shortenBtn").addEventListener("click", async () => {
+    const longUrl = document.getElementById("longUrl").value;
+    if (!longUrl) return alert("Enter URL first!");
 
-// Visitor counter
-async function updateVisitors() {
-  try {
-    const res = await fetch(`${backend}/api/visitors`);
-    const json = await res.json();
-    visitors.innerText = "Visitors: " + json.count;
-  } catch {
-    visitors.innerText = "Visitors: --";
-  }
-}
-updateVisitors();
+    try {
+        const response = await fetch(`${apiBase}/api/shorten`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ longUrl })
+        });
 
-// Shorten URL btn
-shortenBtn.addEventListener("click", async () => {
-  const longUrl = longInput.value.trim();
-  if (!longUrl) return alert("Enter a URL!");
+        const data = await response.json();
 
-  try {
-    const res = await fetch(`${backend}/api/shorten`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json"},
-      body: JSON.stringify({ url: longUrl })
-    });
-    const json = await res.json();
-    if (json.error) return alert("Server error");
-    
-    outputUrl.value = json.shortUrl;
-    resultBox.style.display = "block";
-  } catch {
-    alert("Backend unreachable.");
-  }
-});
-
-// Copy
-copyBtn.addEventListener("click", () => {
-  outputUrl.select();
-  navigator.clipboard.writeText(outputUrl.value);
-  alert("Copied!");
+        if (data.shortUrl) {
+            document.getElementById("result").innerHTML =
+                `<a href="${data.shortUrl}" target="_blank">${data.shortUrl}</a>`;
+        } else {
+            alert("Error shortening!");
+        }
+    } catch (err) {
+        alert("Backend error or offline.");
+        console.error(err);
+    }
 });
