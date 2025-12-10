@@ -1,7 +1,5 @@
-// Render backend URL
 const backend = "https://kensanity-url-shortener.onrender.com";
 
-// Shorten URL function
 async function shorten() {
     const longInput = document.getElementById("longUrl");
     const customInput = document.getElementById("customCode");
@@ -15,6 +13,17 @@ async function shorten() {
     if (!longUrl) return alert("Enter a URL");
     if (customCode && !/^[a-zA-Z0-9]{4}$/.test(customCode)) {
         return alert("Custom code must be exactly 4 alphanumeric characters");
+    }
+
+    // Validate custom code first
+    if (customCode) {
+        const check = await fetch(`${backend}/api/validate-code`, {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({ customCode })
+        });
+        const result = await check.json();
+        if (!result.valid) return alert(result.error || "Custom code not valid");
     }
 
     try {
@@ -41,7 +50,6 @@ async function shorten() {
     }
 }
 
-// Copy button function
 function copyShort() {
     const shortInput = document.getElementById("shortUrl");
     shortInput.select();
@@ -62,5 +70,4 @@ async function updateVisitors() {
     }
 }
 
-// Initialize visitor counter
 updateVisitors();
