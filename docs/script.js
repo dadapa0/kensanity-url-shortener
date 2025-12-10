@@ -1,6 +1,7 @@
+// Render backend URL
 const backend = "https://kensanity-url-shortener.onrender.com";
 
-// Shorten function
+// Shorten URL function (called by button)
 async function shorten() {
     const longInput = document.getElementById("longUrl");
     const shortInput = document.getElementById("shortUrl");
@@ -16,6 +17,7 @@ async function shorten() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ longUrl })
         });
+
         const data = await res.json();
 
         if (data.shortUrl) {
@@ -33,7 +35,7 @@ async function shorten() {
     }
 }
 
-// Copy button function
+// Copy short URL function (called by button)
 function copyShort() {
     const shortInput = document.getElementById("shortUrl");
     shortInput.select();
@@ -43,17 +45,16 @@ function copyShort() {
 
 // Visitor counter
 async function updateVisitors() {
-    const visitorsElem = document.getElementById("visitors");
-    if (!visitorsElem) return;
-
+    const visitorCount = document.getElementById("visitorCount");
     try {
         const res = await fetch(`${backend}/api/visitors`);
         const data = await res.json();
-        visitorsElem.innerText = "Visitors: " + data.count;
-    } catch {
-        visitorsElem.innerText = "Visitors: --";
+        visitorCount.innerText = data.count;
+    } catch (err) {
+        console.error(err);
+        visitorCount.innerText = "--";
     }
 }
 
-// Initialize visitor counter
+// Initialize visitor counter on page load
 updateVisitors();
