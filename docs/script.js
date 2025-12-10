@@ -4,18 +4,24 @@ const backend = "https://kensanity-url-shortener.onrender.com";
 // Shorten URL function
 async function shorten() {
     const longInput = document.getElementById("longUrl");
+    const customInput = document.getElementById("customCode");
     const shortInput = document.getElementById("shortUrl");
     const realLink = document.getElementById("realLink");
     const shortResult = document.getElementById("short-result");
 
     const longUrl = longInput.value.trim();
+    const customCode = customInput.value.trim();
+
     if (!longUrl) return alert("Enter a URL");
+    if (customCode && !/^[a-zA-Z0-9]{4}$/.test(customCode)) {
+        return alert("Custom code must be exactly 4 alphanumeric characters");
+    }
 
     try {
         const res = await fetch(`${backend}/api/shorten`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ longUrl })
+            body: JSON.stringify({ longUrl, customCode })
         });
 
         const data = await res.json();
