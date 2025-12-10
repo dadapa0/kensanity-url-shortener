@@ -1,53 +1,48 @@
-import express from "express";
-import cors from "cors";
-import { nanoid } from "nanoid";
-import fs from "fs";
+const express = require("express");
+const cors = require("cors");
+const fetch = require("node-fetch"); // npm install node-fetch@2
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const dbFile = "./db.json";
+const backendVisitors = { count: 0 }; // in-memory visitor counter
 
-function readDB() {
-  return JSON.parse(fs.readFileSync(dbFile));
-}
-
-function saveDB(data) {
-  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
-}
-
-// API shorten
-app.post("/api/shorten", (req, res) => {
+// Shorten URL via urlshort.dev
+app.post("/api/shorten", async (req, res) => {
   const { longUrl } = req.body;
-
   if (!longUrl) return res.json({ error: "Missing longUrl" });
 
-  const shortId = nanoid(6);
-  const shortUrl = `https://kensanity-url-shortener.onrender.com/${shortId}`;
+  try {
+    const response = await fetch("https://api.encurtador.dev/encurtamentos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: longUrl })
+    });
 
-  const db = readDB();
-  db[shortId] = longUrl;
-  saveDB(db);
+    const data = await response.json();
 
-  res.json({ shortUrl });
-});
-
-// redirect
-app.get("/:id", (req, res) => {
-  const id = req.params.id;
-  const db = readDB();
-
-  if (db[id]) {
-    return res.redirect(db[id]);
+    if (data.urlEncurtada) {
+      return res.json({ shortUrl: data.urlEncurtada });
+    } else {
+      return res.json({ error: "Failed to shorten URL" });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.json({ error: "External API error" });
   }
-  res.status(404).send("URL not found.");
 });
 
-// root just so it doesn’t show “Cannot GET /”
+// Visitor counter
+app.get("/api/visitors", (req, res) => {
+  backendVisitors.count++;
+  res.json({ count: backendVisitors.count });
+});
+
+// Root route
 app.get("/", (req, res) => {
-  res.send("URL Shortener API working 👌");
+  res.send("Kensanity URL Shortener API working 👌");
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on port " + PORT));
+app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
